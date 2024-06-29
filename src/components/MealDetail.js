@@ -1,43 +1,36 @@
 // src/components/MealDetail.js
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
-import { CartContext } from '../CartContext';
+import { useCart } from '../CartContext';
 import './MealDetail.css';
 
 const MealDetail = () => {
   const { id } = useParams();
-  const { addToCart } = useContext(CartContext);
+  const { addToCart } = useCart();
   const [meal, setMeal] = useState(null);
 
   useEffect(() => {
-    axios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
-      .then(response => {
-        setMeal(response.data.meals[0]);
-      })
-      .catch(error => {
-        console.error('Error fetching meal details:', error);
+    fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
+      .then(response => response.json())
+      .then(data => {
+        const mealData = data.meals[0];
+        mealData.price = Math.floor(Math.random() * 50) + 10; // Generate a random price for the meal
+        setMeal(mealData);
       });
   }, [id]);
 
-  if (!meal) return <p>Loading...</p>;
-
-  // Assign a random price for demonstration
-  const price = (Math.random() * 20 + 5).toFixed(2);
+  if (!meal) return <div>Loading...</div>;
 
   return (
     <div className="meal-detail">
       <h2>{meal.strMeal}</h2>
       <img src={meal.strMealThumb} alt={meal.strMeal} />
-      <p>{meal.strInstructions}</p>
-      <h3>Price: ${price}</h3>
-      <button onClick={() => addToCart({ ...meal, price: parseFloat(price) })}>Add to Cart</button>
-      {meal.strYoutube && (
-        <div className="meal-video">
-          <h3>Preparation Video</h3>
-          <a href={meal.strYoutube} target="_blank" rel="noopener noreferrer">Watch on YouTube</a>
-        </div>
-      )}
+      <p><strong>Category:</strong> {meal.strCategory}</p>
+      <p><strong>Area:</strong> {meal.strArea}</p>
+      <p><strong>Instructions:</strong> {meal.strInstructions}</p>
+      <p><strong>Price:</strong> ${meal.price}</p>
+      <button onClick={() => addToCart(meal)}>Add to Cart</button>
+      {meal.strYoutube && <a href={meal.strYoutube} target="_blank" rel="noopener noreferrer">Watch on YouTube</a>}
     </div>
   );
 };
